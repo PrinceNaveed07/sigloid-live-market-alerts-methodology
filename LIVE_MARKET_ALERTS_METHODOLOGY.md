@@ -36,8 +36,9 @@ Live price is then compared with those completed daily levels.
 
 This creates two separate data layers:
 
-1. completed daily structure; and
-2. current live market price.
+## 1. completed daily structure; and
+
+## 2. current live market price.
 
 ---
 
@@ -48,17 +49,23 @@ For assets with at least 55 completed daily candles, Sigloid calculates:
 ```text
 55-day resistance =
 maximum high of the latest 55 completed daily candles
+```
+
+```text
 55-day support =
 minimum low of the latest 55 completed daily candles
+```
 
 In simplified mathematical form:
 
+```text
 resistance_55 = max(high[-55:])
 support_55 = min(low[-55:])
+```
 
 Assets without sufficient completed daily history are not eligible for the standard 55-day alert calculation.
 
-4. Bullish Alert Detection
+## 4. Bullish Alert Detection
 
 A bullish Live Market Alert is created when the latest tracked live price is above completed 55-day resistance.
 
@@ -73,7 +80,7 @@ The alert indicates that upside structure has been breached intraday.
 
 It does not mean the move has been confirmed by the daily close.
 
-5. Bearish Alert Detection
+## 5. Bearish Alert Detection
 
 A bearish Live Market Alert is created when the latest tracked live price is below completed 55-day support.
 
@@ -88,7 +95,7 @@ The alert indicates that downside structure has been breached intraday.
 
 It does not mean the move has been confirmed by the daily close.
 
-6. Live Alert vs Daily-Close Confirmation
+## 6. Live Alert vs Daily-Close Confirmation
 
 Live Market Alerts are intraday structure events.
 
@@ -102,7 +109,7 @@ A bearish structure break is confirmed only if the daily candle later closes bel
 
 This distinction matters because intraday moves can reverse before the daily close.
 
-7. Price Freshness
+## 7. Price Freshness
 
 Sigloid checks whether the available live price is recent enough before using it for alert detection.
 
@@ -112,7 +119,7 @@ If no sufficiently reliable live price is available, the asset is skipped until 
 
 The public methodology does not expose private freshness thresholds or internal source-priority settings.
 
-8. Duplicate Alert Protection
+## 8. Duplicate Alert Protection
 
 Sigloid prevents the same active bullish or bearish structure from being repeatedly added during each scan.
 
@@ -125,7 +132,7 @@ restart recovery from stored active alerts.
 
 The exact production implementation and timing constants are not published.
 
-9. Reference Price
+## 9. Reference Price
 
 Reference Price is the live market price at which Sigloid detected and created the alert.
 
@@ -137,7 +144,7 @@ reference_price = detected_live_price
 
 Reference Price is used to measure how the alert behaves after detection.
 
-10. Current Price
+## 10. Current Price
 
 Current Price is the latest tracked market price displayed for the active alert.
 
@@ -147,13 +154,15 @@ This allows users to compare:
 
 where the alert was detected; and
 where the asset is trading now.
-11. Deviation
+
+## 11. Deviation
 
 Deviation measures how far Current Price has moved from Reference Price in the direction of the alert.
 
-Bullish deviation
+### Bullish deviation
 ((current_price - reference_price) / reference_price) × 100
-Bearish deviation
+
+### Bearish deviation
 ((reference_price - current_price) / reference_price) × 100
 
 A positive deviation means price is moving in the alert direction.
@@ -162,7 +171,7 @@ A negative deviation means price has moved against the alert direction.
 
 A large positive deviation means price has already moved significantly from the Reference Price and should be reviewed carefully on the chart before any decision is made.
 
-12. Alert Bias
+## 12. Alert Bias
 
 Alert Bias describes the direction of the detected structure change.
 
@@ -173,7 +182,7 @@ Alert Bias describes the event direction only.
 
 It does not represent a guaranteed trend continuation or a personal recommendation.
 
-13. Initial Risk Level
+## 13. Initial Risk Level
 
 Risk Level is the active invalidation level assigned to an alert.
 
@@ -190,7 +199,7 @@ For a bearish alert, the initial invalidation level is above live price.
 
 The production system applies a small private risk buffer. The exact constant is not published.
 
-14. Live Moving-Average Context
+## 14. Live Moving-Average Context
 
 Sigloid calculates selected live moving averages by combining completed daily closes with the current live price.
 
@@ -207,24 +216,25 @@ including the current live price
 
 This allows the Risk Level framework to respond during the current day rather than waiting for the next daily close.
 
-15. Risk Level Updates
+## 15. Risk Level Updates
 
 Sigloid reviews active Risk Levels through scheduled structure checks.
 
 The public logic has three broad phases.
 
-Phase 1 — Early alert
+### Phase 1 — Early alert
 
 The Risk Level follows short-term live moving-average context.
 
-Phase 2 — Established alert
+### Phase 2 — Established alert
 
 If price continues in the alert direction and short-term structure improves, the Risk Level moves toward:
 
 the Reference Price;
 breakeven context; or
 medium-term moving-average context.
-Phase 3 — Mature structure
+
+### Phase 3 — Mature structure
 
 Once the alert becomes more established, Sigloid can use shorter-term completed structure levels to maintain the invalidation area.
 
@@ -234,7 +244,7 @@ For bearish alerts, upside structure is used.
 
 Exact thresholds, buffers, and transition conditions remain private.
 
-16. Simplified Risk Level Pseudocode
+## 16. Simplified Risk Level Pseudocode
 if alert_is_new:
     risk_level = short_term_live_structure
 
@@ -251,13 +261,15 @@ risk_level must remain below current_price
 For bearish alerts:
 
 risk_level must remain above current_price
-17. Alert Closure
+
+## 17. Alert Closure
 
 An active alert is closed when live price reaches or crosses the active Risk Level.
 
-Bullish alert
+### Bullish alert
 current_price <= risk_level
-Bearish alert
+
+### Bearish alert
 current_price >= risk_level
 
 When this happens:
@@ -265,7 +277,8 @@ When this happens:
 the alert is treated as invalidated;
 it is removed from the active Live Market Alerts page; and
 its outcome is retained for research and historical analysis.
-18. Alert Lifecycle
+
+## 18. Alert Lifecycle
 
 The simplified Alert Lifecycle is:
 
@@ -278,7 +291,8 @@ Completed daily structure calculated
 → Risk Level updated
 → alert invalidated or remains active
 → closed outcome retained for research
-19. Re-entry Logic
+
+## 19. Re-entry Logic
 
 A previously invalidated or closed structure can become relevant again if price first pulls back and later breaches the completed 55-day level again.
 
@@ -294,7 +308,7 @@ Re-entry detection uses additional direction, pullback, and duplicate-protection
 
 The exact production rules and timing conditions are not published.
 
-20. Position Size Formula
+## 20. Position Size Formula
 
 The position-size calculator uses a user-defined risk amount and the distance between Current Price and Risk Level.
 
@@ -321,7 +335,7 @@ asset-specific execution constraints.
 
 Users remain responsible for validating the result before placing any trade.
 
-21. Market Context Stored at Alert Creation
+## 21. Market Context Stored at Alert Creation
 
 When a new alert is created, Sigloid records a market snapshot associated with that alert.
 
@@ -342,7 +356,7 @@ This allows later analysis to examine the market conditions that existed when th
 
 The exact internal data schema is not published.
 
-22. Active Alert Monitoring
+## 22. Active Alert Monitoring
 
 While an alert remains active, Sigloid monitors:
 
@@ -356,11 +370,11 @@ selected structure changes.
 
 Periodic snapshots may be recorded so the alert can be analyzed over time rather than only at entry and exit.
 
-23. Maximum Favorable and Adverse Movement
+## 23. Maximum Favorable and Adverse Movement
 
 Sigloid tracks the best and worst movement reached while an alert remains active.
 
-Maximum Favorable Excursion
+### Maximum Favorable Excursion
 
 Maximum Favorable Excursion measures the largest move in the alert direction.
 
@@ -377,7 +391,8 @@ MFE =
 (reference_price - lowest_price_since_alert)
 /
 reference_price × 100
-Maximum Adverse Excursion
+
+### Maximum Adverse Excursion
 
 Maximum Adverse Excursion measures the largest move against the alert direction.
 
@@ -397,7 +412,7 @@ reference_price × 100
 
 MFE and MAE are research measurements. They are not forecasts or trade recommendations.
 
-24. Alert Outcomes
+## 24. Alert Outcomes
 
 When an alert closes, Sigloid retains the outcome for research.
 
@@ -416,7 +431,7 @@ selected market context.
 
 This supports later analysis of how different market structures performed under different conditions.
 
-25. Notifications
+## 25. Notifications
 
 When a new Live Market Alert is successfully created, Sigloid sends a notification through its configured notification channels.
 
@@ -426,30 +441,33 @@ Notifications are intended to reduce manual market scanning.
 
 Risk Level updates, snapshots, and alert closures are not necessarily sent as separate public notifications.
 
-26. Live Page Updates
+## 26. Live Page Updates
 
 The Live Market Alerts page receives active alert updates through a live data connection.
 
 The page can receive three broad update types:
 
-ENTRY
-SL_UPDATE
-EXIT
-ENTRY
+### ENTRY
+
+### SL_UPDATE
+
+### EXIT
+
+### ENTRY
 
 Adds a newly created alert to the live page.
 
-SL_UPDATE
+### SL_UPDATE
 
 Updates the active Risk Level shown on the alert card.
 
-EXIT
+### EXIT
 
 Removes the alert from the active page after invalidation or closure.
 
 These labels describe the public alert lifecycle and do not expose Sigloid’s internal event-processing architecture.
 
-27. Search and Filters
+## 27. Search and Filters
 
 The Live Market Alerts page allows users to:
 
@@ -463,7 +481,7 @@ These controls change how active alerts are displayed.
 
 They do not change the underlying detection methodology.
 
-28. Chart and Asset Analysis Links
+## 28. Chart and Asset Analysis Links
 
 Each alert provides access to:
 
@@ -476,7 +494,7 @@ The chart is intended for live visual confirmation.
 
 The asset analysis page provides closed-candle context, including structure, indicators, derivatives data, volatility, and market relationships.
 
-29. Sigloid Index Context
+## 29. Sigloid Index Context
 
 The Live Market Alerts page also displays the current Sigloid Index bias.
 
@@ -490,7 +508,7 @@ The Sigloid Index does not change the basic 55-day alert detection rule.
 
 It provides context for interpretation.
 
-30. Simplified End-to-End Pseudocode
+## 30. Simplified End-to-End Pseudocode
 for symbol in eligible_symbols:
 
     completed_structure = load_completed_daily_structure(symbol)
@@ -542,7 +560,8 @@ for alert in active_alerts:
     elif alert.bias == "BEARISH":
         if current_price >= alert.risk_level:
             close_alert(alert)
-31. What This Public Reference Does Not Publish
+
+## 31. What This Public Reference Does Not Publish
 
 This repository intentionally does not publish:
 
@@ -564,35 +583,35 @@ proprietary monitoring and recovery logic.
 
 The purpose is technical transparency without exposing the complete production system.
 
-32. Methodology Limitations
+## 32. Methodology Limitations
 
 Live Market Alerts have important limitations.
 
-Intraday breaches can fail
+### Intraday breaches can fail
 
 Price can move beyond completed 55-day structure and reverse before the daily close.
 
-Fast markets can create price gaps
+### Fast markets can create price gaps
 
 Reference Price may differ from the exact support or resistance boundary.
 
-Data can be delayed or unavailable
+### Data can be delayed or unavailable
 
 An asset may be skipped when live data is stale, incomplete, or unavailable.
 
-Risk Level is model-derived
+### Risk Level is model-derived
 
 Risk Level is not a personal stop loss and does not account for an individual user’s capital, leverage, liquidity, execution method, or tolerance for loss.
 
-Historical outcomes do not guarantee future results
+### Historical outcomes do not guarantee future results
 
 Past alert behavior does not prove that similar future alerts will perform the same way.
 
-Market conditions change
+### Market conditions change
 
 Volatility, liquidity, funding, correlations, and market regime can change after an alert is created.
 
-33. Research-Only Use
+## 33. Research-Only Use
 
 Sigloid Live Market Alerts are provided as a market research and scanning layer.
 
@@ -608,7 +627,7 @@ personalized risk advice.
 
 Users must apply their own confirmation rules, risk limits, position sizing, execution plan, and independent judgment.
 
-34. Methodology Updates
+## 34. Methodology Updates
 
 Sigloid may update this public methodology as the platform changes.
 
@@ -623,7 +642,7 @@ updated explanations of the Alert Lifecycle.
 
 Changes to this document do not necessarily disclose every production implementation change.
 
-35. Current Public Version
+## 35. Current Public Version
 Methodology: Sigloid Live Market Alerts
 Reference type: Public technical methodology
 Status: Active
